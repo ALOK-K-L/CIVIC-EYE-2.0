@@ -64,12 +64,6 @@ router.post('/', [auth, upload.single('image')], async (req, res) => {
     try {
         const { type, description, latitude, longitude, tags } = req.body;
 
-        // DEBUG LOGGING TO FILE
-        try {
-            const logMsg = `\n[${new Date().toISOString()}] POST /complaints\nBody: ${JSON.stringify(req.body)}\n`;
-            require('fs').appendFileSync(path.join(__dirname, '..', 'submission_debug.log'), logMsg);
-        } catch (e) { }
-
         const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
         // Auto-assign department
@@ -130,6 +124,11 @@ router.post('/', [auth, upload.single('image')], async (req, res) => {
             const safeType = type ? type.toString().toLowerCase().trim() : '';
             const isOthers = ['others', 'other'].includes(safeType);
 
+            // Blockchain Logic for AI Updates
+            // Initialize here so it's accessible in the else (fallback) block
+            const blockLocation = (latitude && longitude) ? { lat: latitude, lng: longitude } : null;
+            const blockTimestamp = new Date().toISOString();
+
             if (aiResult) {
                 try {
                     console.log(`AI Result:`, aiResult);
@@ -140,10 +139,6 @@ router.post('/', [auth, upload.single('image')], async (req, res) => {
                         'UPDATE complaints SET assigned_dept = $1, priority = $2, ai_tags = $3 WHERE id = $4',
                         [department, priority, ai_tags, complaint.id]
                     );
-
-                    // Blockchain Logic for AI Updates
-                    const blockLocation = (latitude && longitude) ? { lat: latitude, lng: longitude } : null;
-                    const blockTimestamp = new Date().toISOString();
 
                     if (isOthers) {
                         await addBlock({

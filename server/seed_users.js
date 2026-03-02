@@ -16,7 +16,7 @@ async function seedUsers() {
         console.log('Connected to database');
 
         // Hash the password
-        const password = '123456';
+        const password = process.env.DB_SEED_PASSWORD || '123456';
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
